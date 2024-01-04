@@ -8,9 +8,12 @@
 {{/native_serialization}}
 {{/isEnum}}
 {{^isEnum}}
+{{#oneOf}}{{#-first}}{{>serialization/native/model_oneOf}}{{/-first}}{{/oneOf}}
+{{^oneOf}}
 {{#native_serialization}}
 {{>serialization/native/native_class}}
 {{/native_serialization}}
+{{/oneOf}}
 {{/isEnum}}
 {{/model}}
 {{/models}}

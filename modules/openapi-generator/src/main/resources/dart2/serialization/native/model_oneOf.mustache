@@ -1,0 +1,149 @@
+{{#isDeprecated}}
+@Deprecated('{{{classname}}} has been deprecated')
+{{/isDeprecated}}
+class {{classname}} extends AbstractOpenAPISchema {
+
+    late Object{{#isNullable}}?{{/isNullable}} _actualInstance;
+    
+    set actualInstance(Object{{#isNullable}}?{{/isNullable}} value) {
+        {{#oneOf}}
+          {{^-first}}else {{/-first}}if (value is {{{.}}})
+            {
+                this._actualInstance = value;
+            }
+        {{/oneOf}}
+        {{#isNullable}}else if(value == null) {
+          this._actualInstance = null;
+        }{{/isNullable}}
+       else
+        {
+            throw new ArgumentError("Invalid instance found. Must be the following types:{{#oneOf}} {{{.}}}{{^-last}},{{/-last}}{{/oneOf}}");
+        }
+    }
+
+    @override
+    Object{{#isNullable}}?{{/isNullable}} get actualInstance => _actualInstance;
+
+    @override
+    bool get isNullable => {{#isNullable}}true{{/isNullable}}{{^isNullable}}false{{/isNullable}};
+
+    @override
+    OpenAPISchemaType get schemaType => OpenAPISchemaType.oneOf;
+
+    /// Provides a string which corresponds to the getter methods
+    ///
+    /// Can be used to switch and get the real instance value
+    String? get which {
+      {{#composedSchemas}}
+        {{#-first}}
+          {{#oneOf}}
+            {{#-first}}
+              {{#oneOf}}
+              if(actualInstance is {{{dataType}}}) {
+                return "{{name}}";
+              }
+              {{/oneOf}}
+              return null;
+            {{/-first}}
+          {{/oneOf}}
+        {{/-first}}
+      {{/composedSchemas}}
+    }
+
+    {{classname}}._(this._actualInstance);
+
+
+    
+{{#composedSchemas}}
+  {{#-first}}
+    {{#oneOf}}
+      {{#-first}}
+        {{#oneOf}}
+          {{{dataType}}} {{getter}}() => actualInstance as {{{dataType}}};
+        {{/oneOf}}
+      {{/-first}}
+    {{/oneOf}}
+  {{/-first}}
+{{/composedSchemas}}
+
+
+
+
+
+
+
+  /// Returns the string presentation of the object
+  ///
+  /// String presentation of the object
+  @override
+  String toString() {
+    var sb = new StringBuffer()
+      ..write("{{classname}} [\n")
+      ..write("  ActualInstance: ")
+      ..write(actualInstance)
+      ..write("\n")
+      ..write("]\n");
+    return sb.toString();
+  }
+
+  dynamic toJson() => jsonEncode(actualInstance);
+
+  static {{classname}}? fromJson(dynamic value) {
+    {{classname}}? _new{{classname}} = null;
+
+
+
+  {{#composedSchemas}}{{#-first}}{{#oneOf}}{{#-first}}
+
+     {{#discriminator}}
+        if(value is Map) {
+            String discriminatorValue = const JsonDecoder().convert(value["{{{propertyBaseName}}}"]).toString();
+            switch (discriminatorValue) {
+              {{#mappedModels}}
+              case "{{{mappingName}}}":
+                var _discriminatedValue = {{{modelName}}}.fromJson(value);
+                {{^isNullable}}
+                if(_discriminatedValue == null) {
+                  return null;
+                }
+                {{/isNullable}}
+                _new{{classname}} = {{classname}}._({{modelName}}.fromJson(_discriminatedValue){{^isNullable}}!{{/isNullable}});
+                return _new{{classname}};
+              {{/mappedModels}}
+              default:
+                // Failed to lookup discriminator value. Will attempt to match directly
+                break;
+          }
+        }
+        {{/discriminator}}
+
+  {{/-first}}{{/oneOf}}
+
+      int _match = 0;
+      final List<String> _matchedTypes = <String>[];
+  
+        {{#oneOf}}
+         {{>serialization/native/snippet_oneOf}}
+        {{/oneOf}}
+  
+  {{/-first}}{{/composedSchemas}}
+
+
+    if (_match == 0) {
+      throw ApiException(HttpStatus.internalServerError, "The JSON string '$value' cannot be deserialized into any schema defined.");
+    } else if (_match > 1) {
+      throw ApiException(HttpStatus.internalServerError, "The JSON string '$value' incorrectly matches more than one schema (should be exactly one match): ${_matchedTypes.join(',')}");
+    }
+
+    // deserialization is considered successful at this point if no exception has been thrown.
+    return _new{{classname}};
+  }
+
+
+  @override
+  bool operator ==(Object other) => identical(this, other) || other is {{classname}} && other.actualInstance == actualInstance;
+
+  @override
+  int get hashCode => _actualInstance{{#isNullable}}?{{/isNullable}}.hashCode{{#isNullable}} ?? 0{{/isNullable}};
+
+}

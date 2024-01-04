@@ -106,3 +106,19 @@ DateTime? mapDateTime(dynamic map, String key, [String? pattern]) {
   }
   return null;
 }
+
+/// Represents which of the polymorphic types an object is
+enum OpenAPISchemaType {
+  anyOf,
+  oneOf,
+  allOf,
+}
+
+/// Base class for polymorphic items
+abstract class AbstractOpenAPISchema {
+  Object get actualInstance;
+
+  bool get isNullable;
+
+  OpenAPISchemaType get schemaType;
+}
