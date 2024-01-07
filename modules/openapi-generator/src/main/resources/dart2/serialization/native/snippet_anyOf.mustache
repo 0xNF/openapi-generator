@@ -1,7 +1,7 @@
         try {
           {{{dataType}}}? _obj =
           {{#isArray}}{{#items}}
-          {{#isPrimitiveType}} (value as Iterable?)?.cast<{{{dataType}}}>().toList();{{/isPrimitiveType}}
+          {{#isPrimitiveType}} (value as Iterable).cast<{{{dataType}}}>().toList();{{/isPrimitiveType}}
           {{#isModel}}{{{dataType}}}.listFromJson(value);{{/isModel}}
           {{/items}}{{/isArray}}
 
@@ -13,7 +13,9 @@
           {{/isArray}}
           if(_obj != null) {
             _new{{classname}} = {{classname}}(_obj);
-            _matchedTypes.add("{{{dataType}}}");
-            _match++;
-          }     
-        } on Exception {}
+            return _new{{classname}};
+          }
+        } on Exception {
+        } on AssertionError {
+            /* ignore assertion errors when deserializing 'anyOf' types */
+        }

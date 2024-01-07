@@ -1,31 +1,20 @@
 package org.openapitools.codegen.languages;
 
 import com.google.common.collect.Sets;
-import com.samskivert.mustache.Mustache;
-import com.samskivert.mustache.Template;
-
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.media.ArraySchema;
 import io.swagger.v3.oas.models.media.ComposedSchema;
-import io.swagger.v3.oas.models.media.Discriminator;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.media.StringSchema;
 import io.swagger.v3.oas.models.servers.Server;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openapitools.codegen.*;
-import org.openapitools.codegen.CodegenDiscriminator.MappedModel;
-import org.openapitools.codegen.api.TemplatePathLocator;
 import org.openapitools.codegen.meta.features.*;
 import org.openapitools.codegen.model.ModelMap;
 import org.openapitools.codegen.model.ModelsMap;
 import org.openapitools.codegen.model.OperationMap;
 import org.openapitools.codegen.model.OperationsMap;
-import org.openapitools.codegen.templating.CommonTemplateContentLocator;
-import org.openapitools.codegen.templating.GeneratorTemplateContentLocator;
-import org.openapitools.codegen.templating.MustacheEngineAdapter;
-import org.openapitools.codegen.templating.TemplateManagerOptions;
 import org.openapitools.codegen.utils.ModelUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -665,31 +654,6 @@ public abstract class AbstractDartCodegen extends DefaultCodegen {
             }
         }
         return op;
-    }
-
-    /// override the default behavior of createDiscriminator
-    /// to remove extra mappings added as a side effect of
-    /// setLegacyDiscriminatorBehavior(false)
-    /// this ensures 1-1 schema mapping instead of 1-many
-    @Override
-    protected CodegenDiscriminator createDiscriminator(String schemaName, Schema schema) {
-        CodegenDiscriminator sub = super.createDiscriminator(schemaName, schema);
-        Discriminator originalDiscriminator = schema.getDiscriminator();
-        if (originalDiscriminator != null) {
-            Map<String, String> originalMapping = originalDiscriminator.getMapping();
-            if (originalMapping != null && !originalMapping.isEmpty()) {
-                // we already have a discriminator mapping, remove everything else
-                for (MappedModel currentMappings : new HashSet<>(sub.getMappedModels())) {
-                    if (originalMapping.containsKey(currentMappings.getMappingName())) {
-                        // all good
-                    } else {
-                        sub.getMapping().remove(currentMappings.getMappingName());
-                        sub.getMappedModels().remove(currentMappings);
-                    }
-                }
-            }
-        }
-        return sub;
     }
 
     @Override

@@ -18,13 +18,27 @@
 package org.openapitools.codegen.languages;
 
 import org.openapitools.codegen.CliOption;
+import org.openapitools.codegen.CodegenComposedSchemas;
 import org.openapitools.codegen.CodegenConstants;
+import org.openapitools.codegen.CodegenDiscriminator;
+import org.openapitools.codegen.CodegenDiscriminator.MappedModel;
+import org.openapitools.codegen.CodegenModel;
+import org.openapitools.codegen.CodegenProperty;
 import org.openapitools.codegen.SupportingFile;
+import org.openapitools.codegen.model.ModelMap;
+import org.openapitools.codegen.model.ModelsMap;
+import org.openapitools.codegen.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.swagger.v3.oas.models.media.Discriminator;
+import io.swagger.v3.oas.models.media.Schema;
+
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class DartClientCodegen extends AbstractDartCodegen {
 
@@ -52,7 +66,7 @@ public class DartClientCodegen extends AbstractDartCodegen {
         super.processOpts();
 
         // handle library not being set
-        if(additionalProperties.get(CodegenConstants.SERIALIZATION_LIBRARY) == null) {
+        if (additionalProperties.get(CodegenConstants.SERIALIZATION_LIBRARY) == null) {
             this.library = SERIALIZATION_LIBRARY_NATIVE;
             LOGGER.debug("Serialization library not set, using default {}", SERIALIZATION_LIBRARY_NATIVE);
         } else {
@@ -79,6 +93,111 @@ public class DartClientCodegen extends AbstractDartCodegen {
         supportingFiles.add(new SupportingFile("README.mustache", "", "README.md"));
         supportingFiles.add(new SupportingFile("travis.mustache", "", ".travis.yml"));
 
+    }
+
+    /// Vendor Extension key that returns Data Types as a valid Dart identifier
+    ///
+    /// e.g., List<String> => listLessThanStringGreaterThan
+    private static final String kDataTypeAsIdentifier = "dataTypeAsIdentifier";
+
+    /// Vendor Extension key that returns Data Types as a valid Dart Identifier in
+    /// CamelCase
+    ///
+    /// e.g., List<String> => ListLessThanStringGreaterThan
+    private static final String kDataTypeAsIdentifierCamelCase = "dataTypeAsIdentifierCamelCase";
+
+    /// Lambda that computes Vendor Extensions for data types, by walking the Model
+    /// Tree
+    Consumer<CodegenProperty> addVendorDataTypeExtensions = x -> {
+        x.vendorExtensions.put(kDataTypeAsIdentifier, toVarName(x.dataType));
+        x.vendorExtensions.put(kDataTypeAsIdentifierCamelCase, StringUtils.camelize(toVarName(x.dataType)));
+
+    };
+
+    /// override the default behavior of createDiscriminator
+    /// to remove extra mappings added as a side effect of
+    /// setLegacyDiscriminatorBehavior(false)
+    /// this ensures 1-1 schema mapping instead of 1-many
+    @Override
+    protected CodegenDiscriminator createDiscriminator(String schemaName, Schema schema) {
+        CodegenDiscriminator sub = super.createDiscriminator(schemaName, schema);
+        Discriminator originalDiscriminator = schema.getDiscriminator();
+        if (originalDiscriminator != null) {
+            Map<String, String> originalMapping = originalDiscriminator.getMapping();
+            if (originalMapping != null && !originalMapping.isEmpty()) {
+                // we already have a discriminator mapping, remove everything else
+                for (MappedModel currentMappings : new HashSet<>(sub.getMappedModels())) {
+                    if (originalMapping.containsKey(currentMappings.getMappingName())) {
+                        // all good
+                    } else {
+                        sub.getMapping().remove(currentMappings.getMappingName());
+                        sub.getMappedModels().remove(currentMappings);
+                    }
+                }
+            }
+        }
+        return sub;
+    }
+
+    /// Visits Composed Schemas and applys the [apply] lambda to each
+    /// CodegenProperty found.
+    /// Primarily used to add formatted data type strings for use the Mustache files
+    private void walkComposedSchemas(CodegenComposedSchemas composedSchemas, Consumer<CodegenProperty> apply) {
+        if (composedSchemas != null) {
+            List<CodegenProperty> schema = null;
+
+            /* walk Any Of */
+            schema = composedSchemas.getAnyOf();
+            if (schema != null) {
+                for (CodegenProperty cp : schema) {
+                    apply.accept(cp);
+                    walkComposedSchemas(cp.getComposedSchemas(), apply);
+                }
+            }
+
+            /* walk One Of */
+            schema = composedSchemas.getOneOf();
+            if (schema != null) {
+                for (CodegenProperty cp : schema) {
+                    apply.accept(cp);
+                    walkComposedSchemas(cp.getComposedSchemas(), apply);
+                }
+            }
+
+            /* walk All Of */
+            schema = composedSchemas.getAllOf();
+            if (schema != null) {
+                for (CodegenProperty cp : schema) {
+                    apply.accept(cp);
+                    walkComposedSchemas(cp.getComposedSchemas(), apply);
+                }
+            }
+
+            /* walk Not */
+            var not = composedSchemas.getNot();
+            if (not != null) {
+                apply.accept(not);
+            }
+        }
+
+    }
+
+    @Override
+    public Map<String, ModelsMap> postProcessAllModels(Map<String, ModelsMap> objs) {
+        objs = super.postProcessAllModels(objs);
+        // loop through models to update the imports
+        for (ModelsMap entry : objs.values()) {
+            for (ModelMap mo : entry.getModels()) {
+                CodegenModel cm = mo.getModel();
+
+                cm.vendorExtensions.put(kDataTypeAsIdentifier, toVarName(cm.dataType));
+                CodegenComposedSchemas cs = cm.getComposedSchemas();
+                walkComposedSchemas(cs, addVendorDataTypeExtensions);
+
+            }
+        }
+
+        return objs;
     }
 
     private void setSerializationLibrary() {

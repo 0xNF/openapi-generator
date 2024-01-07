@@ -9,10 +9,13 @@
 {{/isEnum}}
 {{^isEnum}}
 {{#oneOf}}{{#-first}}{{>serialization/native/model_oneOf}}{{/-first}}{{/oneOf}}
+{{#anyOf}}{{#-first}}{{>serialization/native/model_anyOf}}{{/-first}}{{/anyOf}}
 {{^oneOf}}
+{{^anyOf}}
 {{#native_serialization}}
 {{>serialization/native/native_class}}
 {{/native_serialization}}
+{{/anyOf}}
 {{/oneOf}}
 {{/isEnum}}
 {{/model}}

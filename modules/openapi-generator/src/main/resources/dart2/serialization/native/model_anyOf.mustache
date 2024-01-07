@@ -1,5 +1,6 @@
 {{>serialization/native/snippet_anyOfOneOfEnum}}
 
+
 {{#isDeprecated}}
 @Deprecated('{{{classname}}} has been deprecated')
 {{/isDeprecated}}
@@ -8,20 +9,20 @@ class {{classname}} extends AbstractOpenAPISchema {
     late Object{{#isNullable}}?{{/isNullable}} _actualInstance;
     
     set actualInstance(Object{{#isNullable}}?{{/isNullable}} value) {
-        {{#oneOf}}
+        {{#anyOf}}
           {{^-first}}else {{/-first}}if (value is {{{.}}})
             {
                 this._actualInstance = value;
             }
-        {{/oneOf}}
+        {{/anyOf}}
         {{#isNullable}}else if(value == null) {
           this._actualInstance = null;
         }{{/isNullable}}
        else
         {
-            {{#oneOf}}{{#-first}}
-            throw new ArgumentError("Invalid instance found. Must be any of the following types:{{#oneOf}} {{{.}}}{{^-last}},{{/-last}}{{/oneOf}}");
-            {{/-first}}{{/oneOf}}
+            {{#anyOf}}{{#-first}}
+            throw new ArgumentError("Invalid instance found. Must be any of the following types:{{#anyOf}} {{{.}}}{{^-last}},{{/-last}}{{/anyOf}}");
+            {{/-first}}{{/anyOf}}
         }
     }
 
@@ -32,32 +33,32 @@ class {{classname}} extends AbstractOpenAPISchema {
     bool get isNullable => {{#isNullable}}true{{/isNullable}}{{^isNullable}}false{{/isNullable}};
 
     @override
-    OpenAPISchemaType get schemaType => {{#composedSchemas}}{{#-first}} {{#oneOf}}{{#-first}}OpenAPISchemaType.oneOf;{{/-first}}{{/oneOf}}{{/-first}}{{/composedSchemas}}
+    OpenAPISchemaType get schemaType => {{#composedSchemas}}{{#-first}} {{#anyOf}}{{#-first}}OpenAPISchemaType.anyOf;{{/-first}}{{/anyOf}}{{/-first}}{{/composedSchemas}}
 
     /// Provides an enum which corresponds to the getter methods
     ///
     /// Can be used to switch and get the real instance value
     {{classname}}WhichEnum? get which {
-      {{#composedSchemas.oneOf}}
+      {{#composedSchemas.anyOf}}
       if(actualInstance is {{{dataType}}}) {
         return  {{classname}}WhichEnum.{{#vendorExtensions.dataTypeAsIdentifier}}{{{.}}}{{/vendorExtensions.dataTypeAsIdentifier}};
       }
-      {{/composedSchemas.oneOf}}
+      {{/composedSchemas.anyOf}}
               return null;
     }
-
     {{classname}}(this._actualInstance);
 
 
     
-    {{#composedSchemas.oneOf}}
+    {{#composedSchemas.anyOf}}
     /// Returns a [{{dataType}}] from this OneOf object. 
     ///
     /// Throws [TypeError] if the cast is invalid. 
     ///
     /// use the result of [which] to determine the actual underlying type
     {{{dataType}}}{{#isNullable}}?{{/isNullable}} get{{#vendorExtensions.dataTypeAsIdentifierCamelCase}}{{{.}}}{{/vendorExtensions.dataTypeAsIdentifierCamelCase}}() => actualInstance as {{{dataType}}};
-    {{/composedSchemas.oneOf}}
+    {{/composedSchemas.anyOf}}
+
 
 
 
@@ -80,52 +81,24 @@ class {{classname}} extends AbstractOpenAPISchema {
   static {{classname}}? fromJson(dynamic value) {
     {{classname}}? _new{{classname}} = null;
 
+    if(value == null) {
+        return _new{{classname}};
+    }
 
 
-  {{#composedSchemas}}{{#-first}}{{#oneOf}}{{#-first}}
 
-     {{#discriminator}}
-        if(value is Map) {
-            String discriminatorValue = const JsonDecoder().convert(value["{{{propertyBaseName}}}"]).toString();
-            switch (discriminatorValue) {
-              {{#mappedModels}}
-              case "{{{mappingName}}}":
-                var _discriminatedValue = {{{modelName}}}.fromJson(value);
-                {{^isNullable}}
-                if(_discriminatedValue == null) {
-                  return null;
-                }
-                {{/isNullable}}
-                _new{{classname}} = {{classname}}({{modelName}}.fromJson(_discriminatedValue){{^isNullable}}!{{/isNullable}});
-                return _new{{classname}};
-              {{/mappedModels}}
-              default:
-                // Failed to lookup discriminator value. Will attempt to match directly
-                break;
-          }
-        }
-        {{/discriminator}}
-
-  {{/-first}}{{/oneOf}}
-
-      int _match = 0;
-      final List<String> _matchedTypes = <String>[];
-  
-        {{#oneOf}}
-         {{>serialization/native/snippet_oneOf}}
-        {{/oneOf}}
+  {{#composedSchemas}}{{#-first}}
+ 
+        {{#anyOf}}
+         {{>serialization/native/snippet_anyOf}}
+        {{/anyOf}}
   
   {{/-first}}{{/composedSchemas}}
 
 
-    if (_match == 0) {
-      throw ApiException(HttpStatus.internalServerError, "The JSON string '$value' cannot be deserialized into any schema defined.");
-    } else if (_match > 1) {
-      throw ApiException(HttpStatus.internalServerError, "The JSON string '$value' incorrectly matches more than one schema (should be exactly one match): ${_matchedTypes.join(',')}");
-    }
+    // no match found, throw an exception
+    throw ApiException(HttpStatus.internalServerError, "The JSON string '$value' cannot be deserialized into any schema defined.");
 
-    // deserialization is considered successful at this point if no exception has been thrown.
-    return _new{{classname}};
   }
 
 

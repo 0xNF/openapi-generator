@@ -114,11 +114,18 @@ enum OpenAPISchemaType {
   allOf,
 }
 
-/// Base class for polymorphic items
+/// Base class for polymorphic items, such as represented by OneOf, AnyOf, AllOf, etc
 abstract class AbstractOpenAPISchema {
+
+  /// Actual instance of the item this schema is representing
+  ///
+  /// Prefer accessing by the type-safe Getter methods
   Object get actualInstance;
 
+  /// Whether the uderlying item can be null
   bool get isNullable;
 
+  /// Which of the specific OpenAPI schemas this item falls under
   OpenAPISchemaType get schemaType;
+
 }

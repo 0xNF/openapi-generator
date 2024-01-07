@@ -1,0 +1,14 @@
+enum {{classname}}WhichEnum {
+    {{#composedSchemas.oneOf}}
+    /// Represents a switch for a [{{{dataType}}}] object
+    {{#vendorExtensions.dataTypeAsIdentifier}}
+    {{{.}}},
+    {{/vendorExtensions.dataTypeAsIdentifier}}
+    {{/composedSchemas.oneOf}}
+    {{#composedSchemas.anyOf}}
+    /// Represents a switch for a [{{{dataType}}}] object
+    {{#vendorExtensions.dataTypeAsIdentifier}}
+    {{{.}}},
+    {{/vendorExtensions.dataTypeAsIdentifier}}
+    {{/composedSchemas.anyOf}}
+}
