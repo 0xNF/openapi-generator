@@ -16,4 +16,6 @@
             _matchedTypes.add("{{{dataType}}}");
             _match++;
           }     
-        } on Exception {}
+        } on Exception catch (_) {
+
+        } on TypeError catch (_) {}

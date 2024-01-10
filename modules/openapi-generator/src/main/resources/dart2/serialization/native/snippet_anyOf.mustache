@@ -15,7 +15,8 @@
             _new{{classname}} = {{classname}}(_obj);
             return _new{{classname}};
           }
-        } on Exception {
-        } on AssertionError {
+        } on Exception catch(_) {
+        } on TypeError catch (_) {
+        } on AssertionError catch (_) {
             /* ignore assertion errors when deserializing 'anyOf' types */
         }
