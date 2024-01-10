@@ -129,3 +129,14 @@ abstract class AbstractOpenAPISchema {
   OpenAPISchemaType get schemaType;
 
 }
+
+
+/// Represents keys that must be in a json response, and their ability to have null values
+class _RequiredKey {
+  /// Field that must be present in a json respone
+  final String key;
+  /// Whether the keys value can be [null]
+  final bool isNullable;
+
+  const _RequiredKey(this.key, {this.isNullable=false});
+}
