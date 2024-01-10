@@ -40,7 +40,7 @@ class {{classname}} extends AbstractOpenAPISchema {
     {{classname}}WhichEnum? get which {
       {{#composedSchemas.oneOf}}
       if(actualInstance is {{{dataType}}}) {
-        return  {{classname}}WhichEnum.{{#vendorExtensions.dataTypeAsIdentifier}}{{{.}}}{{/vendorExtensions.dataTypeAsIdentifier}};
+        return  {{classname}}WhichEnum.{{#vendorExtensions.x-dart-datatype-as-identifier}}{{{.}}}{{/vendorExtensions.x-dart-datatype-as-identifier}};
       }
       {{/composedSchemas.oneOf}}
               return null;
@@ -56,7 +56,7 @@ class {{classname}} extends AbstractOpenAPISchema {
     /// Throws [TypeError] if the cast is invalid. 
     ///
     /// use the result of [which] to determine the actual underlying type
-    {{{dataType}}}{{#isNullable}}?{{/isNullable}} get{{#vendorExtensions.dataTypeAsIdentifierCamelCase}}{{{.}}}{{/vendorExtensions.dataTypeAsIdentifierCamelCase}}() => actualInstance as {{{dataType}}};
+    {{{dataType}}}{{#isNullable}}?{{/isNullable}} get{{#vendorExtensions.x-dart-datatype-as-identifier-camel-case}}{{{.}}}{{/vendorExtensions.x-dart-datatype-as-identifier-camel-case}}() => actualInstance as {{{dataType}}};
     {{/composedSchemas.oneOf}}
 
 

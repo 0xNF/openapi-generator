@@ -98,13 +98,13 @@ public class DartClientCodegen extends AbstractDartCodegen {
     /// Vendor Extension key that returns Data Types as a valid Dart identifier
     ///
     /// e.g., List<String> => listLessThanStringGreaterThan
-    private static final String kDataTypeAsIdentifier = "dataTypeAsIdentifier";
+    private static final String kDataTypeAsIdentifier = "x-dart-datatype-as-identifier";
 
     /// Vendor Extension key that returns Data Types as a valid Dart Identifier in
     /// CamelCase
     ///
     /// e.g., List<String> => ListLessThanStringGreaterThan
-    private static final String kDataTypeAsIdentifierCamelCase = "dataTypeAsIdentifierCamelCase";
+    private static final String kDataTypeAsIdentifierCamelCase = "x-dart-datatype-as-identifier-camel-case";
 
     /// Lambda that computes Vendor Extensions for data types, by walking the Model
     /// Tree
