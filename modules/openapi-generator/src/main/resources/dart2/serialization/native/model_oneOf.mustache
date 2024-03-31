@@ -128,6 +128,19 @@ class {{classname}} extends AbstractOpenAPISchema {
     return _new{{classname}};
   }
 
+  static List<{{classname}}>? listFromJson(dynamic json, {bool growable = false,}) {
+    final _result = <{{classname}}>[];
+    if (json is List && json.isNotEmpty) {
+      for (final _row in json) {
+        final value = {{classname}}.fromJson(_row);
+        if (value != null) {
+          _result.add(value);
+        }
+      }
+    }
+    return _result.toList(growable: growable);
+  }
+
 
   @override
   bool operator ==(Object other) => identical(this, other) || other is {{classname}} && other.actualInstance == actualInstance;
