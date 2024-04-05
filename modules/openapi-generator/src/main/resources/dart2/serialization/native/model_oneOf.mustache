@@ -79,14 +79,15 @@ class {{classname}} extends AbstractOpenAPISchema {
 
   static {{classname}}? fromJson(dynamic value) {
     {{classname}}? _new{{classname}} = null;
-
-
+    if(value == null) {
+        return _new{{classname}};
+    }
 
   {{#composedSchemas}}{{#-first}}{{#oneOf}}{{#-first}}
 
      {{#discriminator}}
         if(value is Map) {
-            String discriminatorValue = const JsonDecoder().convert(value["{{{propertyBaseName}}}"]).toString();
+            String? discriminatorValue = value["{{{propertyBaseName}}}"]?.toString();
             switch (discriminatorValue) {
               {{#mappedModels}}
               case "{{{mappingName}}}":
