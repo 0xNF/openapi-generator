@@ -8,23 +8,7 @@ class {{classname}} extends AbstractOpenAPISchema {
 
     late Object{{#isNullable}}?{{/isNullable}} _actualInstance;
     
-    set actualInstance(Object{{#isNullable}}?{{/isNullable}} value) {
-        {{#anyOf}}
-          {{^-first}}else {{/-first}}if (value is {{{.}}})
-            {
-                this._actualInstance = value;
-            }
-        {{/anyOf}}
-        {{#isNullable}}else if(value == null) {
-          this._actualInstance = null;
-        }{{/isNullable}}
-       else
-        {
-            {{#anyOf}}{{#-first}}
-            throw new ArgumentError("Invalid instance found. Must be any of the following types:{{#anyOf}} {{{.}}}{{^-last}},{{/-last}}{{/anyOf}}");
-            {{/-first}}{{/anyOf}}
-        }
-    }
+    set actualInstance(Object{{#isNullable}}?{{/isNullable}} value) => _actualInstance = _validateData(value);
 
     @override
     Object{{#isNullable}}?{{/isNullable}} get actualInstance => _actualInstance;
@@ -46,10 +30,22 @@ class {{classname}} extends AbstractOpenAPISchema {
       {{/composedSchemas.anyOf}}
               return null;
     }
-    {{classname}}(this._actualInstance);
+    {{classname}}(dynamic value) : _actualInstance = _validateData(value);
 
+    static Object{{#isNullable}}?{{/isNullable}} _validateData(dynamic value) {
+      {{#isNullable}}
+      if (value == null) {
+        return null;
+      }
+      {{/isNullable}}
+      {{#composedSchemas.oneOf}}
+      if (value is {{{dataType}}}) {
+        return value;
+      }
+      {{/composedSchemas.oneOf}}
+      throw new ArgumentError("Invalid instance found. Must be any of the following types: DataRuleInterval, DataRuleRange, DataRuleSet, but got ${value.runtimeType}");
+    }
 
-    
     {{#composedSchemas.anyOf}}
     /// Returns a [{{dataType}}] from this OneOf object. 
     ///
@@ -58,8 +54,6 @@ class {{classname}} extends AbstractOpenAPISchema {
     /// use the result of [which] to determine the actual underlying type
     {{{dataType}}}{{#isNullable}}?{{/isNullable}} get{{#vendorExtensions.x-dart-datatype-as-identifier-camel-case}}{{{.}}}{{/vendorExtensions.x-dart-datatype-as-identifier-camel-case}}() => actualInstance as {{{dataType}}};
     {{/composedSchemas.anyOf}}
-
-
 
 
   /// Returns the string presentation of the object
@@ -84,8 +78,6 @@ class {{classname}} extends AbstractOpenAPISchema {
     if(value == null) {
         return _new{{classname}};
     }
-
-
 
   {{#composedSchemas}}{{#-first}}
  

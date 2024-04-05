@@ -7,23 +7,7 @@ class {{classname}} extends AbstractOpenAPISchema {
 
     late Object{{#isNullable}}?{{/isNullable}} _actualInstance;
     
-    set actualInstance(Object{{#isNullable}}?{{/isNullable}} value) {
-        {{#oneOf}}
-          {{^-first}}else {{/-first}}if (value is {{{.}}})
-            {
-                this._actualInstance = value;
-            }
-        {{/oneOf}}
-        {{#isNullable}}else if(value == null) {
-          this._actualInstance = null;
-        }{{/isNullable}}
-       else
-        {
-            {{#oneOf}}{{#-first}}
-            throw new ArgumentError("Invalid instance found. Must be any of the following types:{{#oneOf}} {{{.}}}{{^-last}},{{/-last}}{{/oneOf}}");
-            {{/-first}}{{/oneOf}}
-        }
-    }
+    set actualInstance(Object{{#isNullable}}?{{/isNullable}} value) => _actualInstance = _validateData(value);
 
     @override
     Object{{#isNullable}}?{{/isNullable}} get actualInstance => _actualInstance;
@@ -39,14 +23,29 @@ class {{classname}} extends AbstractOpenAPISchema {
     /// Can be used to switch and get the real instance value
     {{classname}}WhichEnum? get which {
       {{#composedSchemas.oneOf}}
-      if(actualInstance is {{{dataType}}}) {
-        return  {{classname}}WhichEnum.{{#vendorExtensions.x-dart-datatype-as-identifier}}{{{.}}}{{/vendorExtensions.x-dart-datatype-as-identifier}};
+      if (actualInstance is {{{dataType}}}) {
+        return {{classname}}WhichEnum.{{#vendorExtensions.x-dart-datatype-as-identifier}}{{{.}}}{{/vendorExtensions.x-dart-datatype-as-identifier}};
       }
       {{/composedSchemas.oneOf}}
-              return null;
+      return null;
     }
 
-    {{classname}}(this._actualInstance);
+    {{classname}}(dynamic value) : _actualInstance = _validateData(value);
+
+    
+    static Object{{#isNullable}}?{{/isNullable}} _validateData(dynamic value) {
+      {{#isNullable}}
+      if (value == null) {
+        return null;
+      }
+      {{/isNullable}}
+      {{#composedSchemas.oneOf}}
+      if (value is {{{dataType}}}) {
+        return value;
+      }
+      {{/composedSchemas.oneOf}}
+      throw new ArgumentError("Invalid instance found. Must be any of the following types: DataRuleInterval, DataRuleRange, DataRuleSet, but got ${value.runtimeType}");
+    }
 
 
     
@@ -97,7 +96,7 @@ class {{classname}} extends AbstractOpenAPISchema {
                   return null;
                 }
                 {{/isNullable}}
-                _new{{classname}} = {{classname}}({{modelName}}.fromJson(_discriminatedValue){{^isNullable}}!{{/isNullable}});
+                _new{{classname}} = {{classname}}(_discriminatedValue);
                 return _new{{classname}};
               {{/mappedModels}}
               default:
