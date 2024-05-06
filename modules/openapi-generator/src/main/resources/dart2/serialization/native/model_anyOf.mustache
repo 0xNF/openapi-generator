@@ -70,7 +70,7 @@ class {{classname}} extends AbstractOpenAPISchema {
     return sb.toString();
   }
 
-  dynamic toJson() => jsonEncode(actualInstance);
+  dynamic toJson() =>  (actualInstance == null || actualInstance is num || actualInstance is bool || actualInstance is String) ?  actualInstance : jsonEncode(actualInstance);
 
   static {{classname}}? fromJson(dynamic value) {
     {{classname}}? _new{{classname}} = null;
