@@ -139,4 +139,17 @@ class _RequiredKey {
   final bool isNullable;
 
   const _RequiredKey(this.key, {this.isNullable=false});
+
+  /// Ensure that the map contains the required keys.
+  /// Note 1: the values aren't checked for validity beyond being non-null.
+  /// Note 2: this code is stripped in release mode!
+  static bool assertRequiredKeys(Iterable<_RequiredKey> requiredKeys, String className, Map<String, dynamic> json) {
+    for (var requiredKey in requiredKeys) {
+      assert(json.containsKey(requiredKey.key), 'Required key "$className[${requiredKey.key}]" is missing from JSON.');
+      if(!requiredKey.isNullable) {
+        assert(json[requiredKey.key] != null, 'Required key "$className[${requiredKey.key}]" has a null value in JSON.');
+      }
+    }
+    return true;
+  }
 }
