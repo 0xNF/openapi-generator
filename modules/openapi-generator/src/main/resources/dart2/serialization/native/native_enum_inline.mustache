@@ -28,18 +28,28 @@ class {{{enumName}}} {
 
   static {{{enumName}}}? fromJson(dynamic value) => {{{enumName}}}TypeTransformer().decode(value);
 
-  static List<{{{enumName}}}> listFromJson(dynamic json, {bool growable = false,}) {
-    final result = <{{{enumName}}}>[];
-    if (json is List && json.isNotEmpty) {
+  static List<{{{enumName}}}>? listFromJson(dynamic json, {bool growable = false, bool exitOnInvalidDeserde = true}) {
+    if(json is List) {
+      final result = <{{{enumName}}}>[];
       for (final row in json) {
         final value = {{{enumName}}}.fromJson(row);
-        if (value != null) {
+        if(value != null) {
           result.add(value);
+        } else if (value == null && exitOnInvalidDeserde) {
+          return null;
         }
       }
+      return result.toList(growable: growable);
+    } else {
+      return null;
     }
-    return result.toList(growable: growable);
   }
+
+  @override
+  bool operator ==(Object other) => identical(this, other) || other is {{{enumName}}} && other.value == value;
+
+  @override
+  int get hashCode => value.hashCode;
 }
 
 /// Transformation class that can [encode] an instance of [{{{enumName}}}] to {{{dataType}}},

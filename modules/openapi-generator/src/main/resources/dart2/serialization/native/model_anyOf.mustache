@@ -1,0 +1,103 @@
+{{>serialization/native/snippet_anyOfOneOfEnum}}
+
+
+{{#isDeprecated}}
+@Deprecated('{{{classname}}} has been deprecated')
+{{/isDeprecated}}
+class {{classname}} extends AbstractOpenAPISchema {
+
+    late Object{{#isNullable}}?{{/isNullable}} _actualInstance;
+    
+    set actualInstance(Object{{#isNullable}}?{{/isNullable}} value) => _actualInstance = _validateData(value);
+
+    @override
+    Object{{#isNullable}}?{{/isNullable}} get actualInstance => _actualInstance;
+
+    @override
+    bool get isNullable => {{#isNullable}}true{{/isNullable}}{{^isNullable}}false{{/isNullable}};
+
+    @override
+    OpenAPISchemaType get schemaType => {{#composedSchemas}}{{#-first}} {{#anyOf}}{{#-first}}OpenAPISchemaType.anyOf;{{/-first}}{{/anyOf}}{{/-first}}{{/composedSchemas}}
+
+    /// Provides an enum which corresponds to the getter methods
+    ///
+    /// Can be used to switch and get the real instance value
+    {{classname}}WhichEnum? get which {
+      {{#composedSchemas.anyOf}}
+      if(actualInstance is {{{dataType}}}) {
+        return  {{classname}}WhichEnum.{{#vendorExtensions.x-dart-datatype-as-identifier}}{{{.}}}{{/vendorExtensions.x-dart-datatype-as-identifier}};
+      }
+      {{/composedSchemas.anyOf}}
+              return null;
+    }
+    {{classname}}(dynamic value) : _actualInstance = _validateData(value);
+
+    static Object{{#isNullable}}?{{/isNullable}} _validateData(dynamic value) {
+      {{#isNullable}}
+      if (value == null) {
+        return null;
+      }
+      {{/isNullable}}
+      {{#composedSchemas.oneOf}}
+      if (value is {{{dataType}}}) {
+        return value;
+      }
+      {{/composedSchemas.oneOf}}
+      throw new ArgumentError("Invalid instance found. Must be any of the following types: DataRuleInterval, DataRuleRange, DataRuleSet, but got ${value.runtimeType}");
+    }
+
+    {{#composedSchemas.anyOf}}
+    /// Returns a [{{dataType}}] from this OneOf object. 
+    ///
+    /// Throws [TypeError] if the cast is invalid. 
+    ///
+    /// use the result of [which] to determine the actual underlying type
+    {{{dataType}}}{{#isNullable}}?{{/isNullable}} get{{#vendorExtensions.x-dart-datatype-as-identifier-camel-case}}{{{.}}}{{/vendorExtensions.x-dart-datatype-as-identifier-camel-case}}() => actualInstance as {{{dataType}}};
+    {{/composedSchemas.anyOf}}
+
+
+  /// Returns the string presentation of the object
+  ///
+  /// String presentation of the object
+  @override
+  String toString() {
+    var sb = new StringBuffer()
+      ..write("{{classname}} [\n")
+      ..write("  actualInstance: ")
+      ..write(actualInstance)
+      ..write("\n")
+      ..write("]\n");
+    return sb.toString();
+  }
+
+  dynamic toJson() =>  (actualInstance == null || actualInstance is num || actualInstance is bool || actualInstance is String) ?  actualInstance : jsonEncode(actualInstance);
+
+  static {{classname}}? fromJson(dynamic value) {
+    {{classname}}? _new{{classname}} = null;
+
+    if(value == null) {
+        return _new{{classname}};
+    }
+
+  {{#composedSchemas}}{{#-first}}
+ 
+        {{#anyOf}}
+         {{>serialization/native/snippet_anyOf}}
+        {{/anyOf}}
+  
+  {{/-first}}{{/composedSchemas}}
+
+
+    // no match found, throw an exception
+    throw ApiException(HttpStatus.internalServerError, "The JSON string '$value' cannot be deserialized into any schema defined.");
+
+  }
+
+
+  @override
+  bool operator ==(Object other) => identical(this, other) || other is {{classname}} && other.actualInstance == actualInstance;
+
+  @override
+  int get hashCode => _actualInstance{{#isNullable}}?{{/isNullable}}.hashCode{{#isNullable}} ?? 0{{/isNullable}};
+
+}

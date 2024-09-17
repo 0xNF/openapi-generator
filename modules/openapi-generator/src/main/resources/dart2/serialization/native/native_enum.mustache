@@ -28,18 +28,29 @@ class {{{classname}}} {
 
   static {{{classname}}}? fromJson(dynamic value) => {{{classname}}}TypeTransformer().decode(value);
 
-  static List<{{{classname}}}> listFromJson(dynamic json, {bool growable = false,}) {
-    final result = <{{{classname}}}>[];
-    if (json is List && json.isNotEmpty) {
+  static List<{{{classname}}}>? listFromJson(dynamic json, {bool growable = false, bool exitOnInvalidDeserde = true}) {
+    if(json is List) {
+      final result = <{{{classname}}}>[];
       for (final row in json) {
         final value = {{{classname}}}.fromJson(row);
-        if (value != null) {
+        if(value != null) {
           result.add(value);
+        } else if (value == null && exitOnInvalidDeserde) {
+          return null;
         }
       }
+      return result.toList(growable: growable);
+    } else {
+      return null;
     }
-    return result.toList(growable: growable);
   }
+
+  
+  @override
+  bool operator ==(Object other) => identical(this, other) || other is {{{classname}}} && other.value == value;
+
+  @override
+  int get hashCode => value.hashCode;
 }
 
 /// Transformation class that can [encode] an instance of [{{{classname}}}] to {{{dataType}}},

@@ -1,0 +1,21 @@
+        try {
+          {{{dataType}}}? _obj =
+          {{#isArray}}{{#items}}
+          {{#isPrimitiveType}} (value as Iterable?)?.cast<{{{dataType}}}>().toList();{{/isPrimitiveType}}
+          {{#isModel}}{{{dataType}}}.listFromJson(value, exitOnInvalidDeserde: true);{{/isModel}} /* explicitly enable exit on invalid, so we can correctly catch items that are all lists, but of different parameterized types */
+          {{/items}}{{/isArray}}
+
+          {{^isArray}}
+          {{#isPrimitiveType}}
+          value as {{{dataType}}}?;
+          {{/isPrimitiveType}}
+          {{^isPrimitiveType}}{{#isModel}} {{dataType}}.fromJson(value); {{/isModel}}{{/isPrimitiveType}}
+          {{/isArray}}
+          if(_obj != null) {
+            _new{{classname}} = {{classname}}(_obj);
+            _matchedTypes.add("{{{dataType}}}");
+            _match++;
+          }     
+        } on Exception catch (_) {
+        } on TypeError catch (_) {
+        } on AssertionError catch (_) {}

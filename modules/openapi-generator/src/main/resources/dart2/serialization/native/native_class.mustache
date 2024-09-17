@@ -109,21 +109,11 @@ class {{{classname}}} {
 
   /// Returns a new [{{{classname}}}] instance and imports its values from
   /// [value] if it's a [Map], null otherwise.
-  // ignore: prefer_constructors_over_static_methods
   static {{{classname}}}? fromJson(dynamic value) {
     if (value is Map) {
       final json = value.cast<String, dynamic>();
 
-      // Ensure that the map contains the required keys.
-      // Note 1: the values aren't checked for validity beyond being non-null.
-      // Note 2: this code is stripped in release mode!
-      assert(() {
-        requiredKeys.forEach((key) {
-          assert(json.containsKey(key), 'Required key "{{{classname}}}[$key]" is missing from JSON.');
-          assert(json[key] != null, 'Required key "{{{classname}}}[$key]" has a null value in JSON.');
-        });
-        return true;
-      }());
+      assert(_RequiredKey.assertRequiredKeys(requiredKeys, '{{{classname}}}', json));
 
       return {{{classname}}}(
   {{#vars}}
@@ -150,7 +140,7 @@ class {{{classname}}} {
           :  {{#isNullable}}null{{/isNullable}}{{^isNullable}}const []{{/isNullable}},
             {{/items.isArray}}
             {{^items.isArray}}
-        {{{name}}}: {{{complexType}}}.listFromJson(json[r'{{{baseName}}}']){{#uniqueItems}}.toSet(){{/uniqueItems}},
+        {{{name}}}: {{{complexType}}}.listFromJson(json[r'{{{baseName}}}']){{#uniqueItems}}.toSet(){{/uniqueItems}}{{^isNullable}} ?? const []{{/isNullable}},
             {{/items.isArray}}
           {{/isArray}}
           {{^isArray}}
@@ -219,8 +209,7 @@ class {{{classname}}} {
                 {{^isEnum}}
         {{{name}}}: mapValueOfType<{{{datatypeWithEnum}}}>(json, r'{{{baseName}}}'){{#required}}{{^isNullable}}!{{/isNullable}}{{/required}}{{^required}}{{#defaultValue}} ?? {{{.}}}{{/defaultValue}}{{/required}},
                 {{/isEnum}}
-                {{#isEnum}}
-        {{{name}}}: {{{enumName}}}.fromJson(json[r'{{{baseName}}}']){{#required}}{{^isNullable}}!{{/isNullable}}{{/required}}{{^required}}{{#defaultValue}} ?? {{{.}}}{{/defaultValue}}{{/required}},
+                {{#isEnum}}{{{name}}}: {{{enumName}}}.fromJson(json[r'{{{baseName}}}']){{#required}}{{^isNullable}}!{{/isNullable}}{{/required}}{{^required}}{{#defaultValue}} ?? {{#isEnum}}{{^isContainer}}{{^isNumeric}}const {{{enumName}}}._({{/isNumeric}}{{/isContainer}}{{/isEnum}}{{{.}}}{{#isEnum}}{{^isContainer}}{{^isNumeric}}){{/isNumeric}}{{/isContainer}}{{/isEnum}}{{/defaultValue}}{{/required}},
                 {{/isEnum}}
               {{/isNumber}}
             {{/isMap}}
@@ -234,51 +223,68 @@ class {{{classname}}} {
     return null;
   }
 
-  static List<{{{classname}}}> listFromJson(dynamic json, {bool growable = false,}) {
-    final result = <{{{classname}}}>[];
-    if (json is List && json.isNotEmpty) {
+  static List<{{{classname}}}>? listFromJson(dynamic json, {bool growable = false, bool exitOnInvalidDeserde = true}) {
+    if (json is List) {
+      final result = <{{{classname}}}>[];
       for (final row in json) {
         final value = {{{classname}}}.fromJson(row);
-        if (value != null) {
+        if(value != null) {
           result.add(value);
+        } else if (value == null && exitOnInvalidDeserde) {
+          return null;
         }
       }
+      return result.toList(growable: growable);
+    } else {
+      return null;
     }
-    return result.toList(growable: growable);
   }
 
-  static Map<String, {{{classname}}}> mapFromJson(dynamic json) {
+  static Map<String, {{{classname}}}>? mapFromJson(dynamic json, {bool exitOnInvalidDeserde = true}) {
+    if(json is Map) {
     final map = <String, {{{classname}}}>{};
-    if (json is Map && json.isNotEmpty) {
       json = json.cast<String, dynamic>(); // ignore: parameter_assignments
       for (final entry in json.entries) {
         final value = {{{classname}}}.fromJson(entry.value);
-        if (value != null) {
+        if(value != null) {
           map[entry.key] = value;
+        } else if (value == null && exitOnInvalidDeserde) {
+          return null;
         }
       }
+      return map;
+    } else {
+      return null;
     }
-    return map;
+
   }
 
   // maps a json object with a list of {{{classname}}}-objects as value to a dart map
-  static Map<String, List<{{{classname}}}>> mapListFromJson(dynamic json, {bool growable = false,}) {
+  static Map<String, List<{{{classname}}}>>? mapListFromJson(dynamic json, {bool growable = false, bool exitOnInvalidDeserde = true}) {
+    if(json is Map) {
     final map = <String, List<{{{classname}}}>>{};
-    if (json is Map && json.isNotEmpty) {
       // ignore: parameter_assignments
       json = json.cast<String, dynamic>();
       for (final entry in json.entries) {
-        map[entry.key] = {{{classname}}}.listFromJson(entry.value, growable: growable,);
+        final value = {{{classname}}}.listFromJson(entry.value, growable: growable, exitOnInvalidDeserde: exitOnInvalidDeserde);
+        if(value != null) {
+          map[entry.key] = value!;
+        } else if (value == null && exitOnInvalidDeserde) {
+          return null;
+        }
       }
+      return map;
+    } else {
+      return null;
     }
-    return map;
+   
   }
 
   /// The list of required keys that must be present in a JSON.
-  static const requiredKeys = <String>{
+  static const requiredKeys = <_RequiredKey>{
 {{#vars}}
   {{#required}}
-    '{{{baseName}}}',
+    _RequiredKey('{{{baseName}}}'{{#isNullable}}, isNullable: true{{/isNullable}}),
   {{/required}}
 {{/vars}}
   };
